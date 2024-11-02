@@ -1,46 +1,41 @@
 defmodule BankAccount do
+	defstruct balance: 0, transactions: []
+
+	@doc "Open an account"
 	def open_account(initial_balance) do
 		IO.puts "Account opened with initial balance of #{initial_balance}..."
-		[{:deposit, initial_balance}]
+		%BankAccount{balance: initial_balance, transactions: [{:deposit, initial_balance}]}
 	end
 
-	def deposit(account, amount) do
+	@doc "Deposit amount"
+	def deposit(%BankAccount{balance: balance, transactions: transactions} = account, amount) do
 		IO.puts "Depositing #{amount}..."
-		account ++ [{:deposit, amount}]
+		%BankAccount{account | balance: balance + amount, transactions: transactions ++ [{:deposit, amount}]}
 	end
 
-	def withdraw(account, amount) do
+	@doc "Withdrawal conditional on sufficient funds"
+	def withdraw(%BankAccount{balance: balance, transactions: transactions} = account, amount) do
 		IO.puts "Withdrawing #{amount}..."
-		total = Enum.reduce(account, 0, fn
-			{:deposit, deposit}, total -> total + deposit
-			{:withdrawal, withdraw}, total -> total - withdraw
-		end)
-		IO.puts "Total = #{total}"
-		if amount < total do
-			# allow the withdrawal
+		if amount <= balance do 
 			IO.puts "Processing withdrawal of #{amount}..."
-			# mark the withdrawal
-			account ++ [{:withdrawal, amount}]
+			%BankAccount{account | balance: balance - amount, transactions: transactions ++ [{:withdrawal, amount}]}
 		else
-			# insufficient funds
 			IO.puts "Insufficient funds!"
 			account
 		end
 	end
 
-	def transaction_history(account) do
+
+	@doc "Print transaction history"
+	def transaction_history(%BankAccount{balance: balance, transactions: transactions}) do
 		IO.puts "\nAccount history"
 		IO.puts String.duplicate("*", 30)
-		Enum.each(account, fn
+		Enum.each(transactions, fn
 			{:deposit, deposit} -> IO.puts("Deposited #{deposit}.")
 			{:withdrawal, withdraw} -> IO.puts("Withdrew #{withdraw}.")
 		end)
-		total = Enum.reduce(account, 0, fn
-			{:deposit, deposit}, total -> total + deposit
-			{:withdrawal, withdraw}, total -> total - withdraw
-		end)
 		IO.puts String.duplicate("*", 30)
-		IO.puts "Balance: #{total}"
+		IO.puts "Balance: #{balance}"
 	end
 end
 
